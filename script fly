@@ -1,4 +1,4 @@
---// Fly Script (PC + Boost)
+--// Fly Script (Fix + Q Boost)
 
 local player = game.Players.LocalPlayer
 local char = player.Character or player.CharacterAdded:Wait()
@@ -40,7 +40,7 @@ UIS.InputBegan:Connect(function(input, gpe)
         end
     end
 
-    -- Movement
+    -- Movement (FIXED)
     if input.KeyCode == Enum.KeyCode.W then control.F = 1 end
     if input.KeyCode == Enum.KeyCode.S then control.B = -1 end
     if input.KeyCode == Enum.KeyCode.A then control.L = -1 end
@@ -48,8 +48,8 @@ UIS.InputBegan:Connect(function(input, gpe)
     if input.KeyCode == Enum.KeyCode.Space then control.U = 1 end
     if input.KeyCode == Enum.KeyCode.LeftControl then control.D = -1 end
 
-    -- BOOST
-    if input.KeyCode == Enum.KeyCode.LeftShift then
+    -- BOOST (Q)
+    if input.KeyCode == Enum.KeyCode.Q then
         speed = boostSpeed
     end
 end)
@@ -63,7 +63,7 @@ UIS.InputEnded:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.LeftControl then control.D = 0 end
 
     -- Stop BOOST
-    if input.KeyCode == Enum.KeyCode.LeftShift then
+    if input.KeyCode == Enum.KeyCode.Q then
         speed = normalSpeed
     end
 end)
@@ -72,7 +72,9 @@ end)
 RunService.RenderStepped:Connect(function()
     if flying then
         local cam = workspace.CurrentCamera
-        local move = Vector3.new(control.L + control.R, control.U + control.D, control.F + control.B)
+        
+        -- 🔥 FIX ตรงนี้ (สลับแกน Z)
+        local move = Vector3.new(control.L + control.R, control.U + control.D, -(control.F + control.B))
 
         BV.Velocity = cam.CFrame:VectorToWorldSpace(move) * speed
         BG.CFrame = cam.CFrame
