@@ -1,0 +1,80 @@
+--// Fly Script (PC + Boost)
+
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- Settings
+local flying = false
+local normalSpeed = 70
+local boostSpeed = 150
+local speed = normalSpeed
+
+local control = {
+    F = 0, B = 0, L = 0, R = 0, U = 0, D = 0
+}
+
+-- Body movers
+local BV = Instance.new("BodyVelocity")
+BV.MaxForce = Vector3.new(1e9,1e9,1e9)
+
+local BG = Instance.new("BodyGyro")
+BG.MaxTorque = Vector3.new(1e9,1e9,1e9)
+
+-- Key Controls
+UIS.InputBegan:Connect(function(input, gpe)
+    if gpe then return end
+
+    -- Toggle Fly
+    if input.KeyCode == Enum.KeyCode.E then
+        flying = not flying
+        
+        if flying then
+            BV.Parent = hrp
+            BG.Parent = hrp
+        else
+            BV.Parent = nil
+            BG.Parent = nil
+        end
+    end
+
+    -- Movement
+    if input.KeyCode == Enum.KeyCode.W then control.F = 1 end
+    if input.KeyCode == Enum.KeyCode.S then control.B = -1 end
+    if input.KeyCode == Enum.KeyCode.A then control.L = -1 end
+    if input.KeyCode == Enum.KeyCode.D then control.R = 1 end
+    if input.KeyCode == Enum.KeyCode.Space then control.U = 1 end
+    if input.KeyCode == Enum.KeyCode.LeftControl then control.D = -1 end
+
+    -- BOOST
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        speed = boostSpeed
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.W then control.F = 0 end
+    if input.KeyCode == Enum.KeyCode.S then control.B = 0 end
+    if input.KeyCode == Enum.KeyCode.A then control.L = 0 end
+    if input.KeyCode == Enum.KeyCode.D then control.R = 0 end
+    if input.KeyCode == Enum.KeyCode.Space then control.U = 0 end
+    if input.KeyCode == Enum.KeyCode.LeftControl then control.D = 0 end
+
+    -- Stop BOOST
+    if input.KeyCode == Enum.KeyCode.LeftShift then
+        speed = normalSpeed
+    end
+end)
+
+-- Main Loop
+RunService.RenderStepped:Connect(function()
+    if flying then
+        local cam = workspace.CurrentCamera
+        local move = Vector3.new(control.L + control.R, control.U + control.D, control.F + control.B)
+
+        BV.Velocity = cam.CFrame:VectorToWorldSpace(move) * speed
+        BG.CFrame = cam.CFrame
+    end
+end)
