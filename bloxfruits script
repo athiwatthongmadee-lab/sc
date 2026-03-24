@@ -1,0 +1,36 @@
+-- Auto Farm Basic (Blox Fruits)
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+
+getgenv().AutoFarm = true
+
+function GetNearestEnemy()
+    local nearest = nil
+    local distance = math.huge
+
+    for i,v in pairs(game:GetService("Workspace").Enemies:GetChildren()) do
+        if v:FindFirstChild("Humanoid") and v.Humanoid.Health > 0 then
+            local mag = (character.HumanoidRootPart.Position - v.HumanoidRootPart.Position).Magnitude
+            if mag < distance then
+                distance = mag
+                nearest = v
+            end
+        end
+    end
+    return nearest
+end
+
+while getgenv().AutoFarm do
+    task.wait()
+
+    local enemy = GetNearestEnemy()
+    if enemy then
+        -- วาร์ปไปด้านหลังศัตรู
+        character.HumanoidRootPart.CFrame = enemy.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+
+        -- ตี
+        game:GetService("VirtualUser"):CaptureController()
+        game:GetService("VirtualUser"):Button1Down(Vector2.new(0,0))
+    end
+end
