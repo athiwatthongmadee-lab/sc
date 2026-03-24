@@ -1,0 +1,50 @@
+-- โหลด Rayfield
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "FPS Booster",
+    LoadingTitle = "Boosting...",
+    LoadingSubtitle = "by เพื่อน",
+})
+
+local Tab = Window:CreateTab("Main", 4483362458)
+
+local BoostOn = false
+
+-- ฟังก์ชันลดกราฟิก
+function BoostFPS()
+    for _, v in pairs(game:GetDescendants()) do
+        if v:IsA("BasePart") then
+            v.Material = Enum.Material.SmoothPlastic
+            v.Reflectance = 0
+        elseif v:IsA("Decal") or v:IsA("Texture") then
+            v:Destroy()
+        elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+            v:Destroy()
+        elseif v:IsA("Explosion") then
+            v:Destroy()
+        elseif v:IsA("Fire") or v:IsA("Smoke") then
+            v:Destroy()
+        end
+    end
+
+    -- ปรับแสง
+    local lighting = game:GetService("Lighting")
+    lighting.GlobalShadows = false
+    lighting.FogEnd = 9e9
+    lighting.Brightness = 0
+
+    settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
+end
+
+-- Toggle
+Tab:CreateToggle({
+    Name = "FPS Boost",
+    CurrentValue = false,
+    Callback = function(Value)
+        BoostOn = Value
+        if BoostOn then
+            BoostFPS()
+        end
+    end,
+})      
