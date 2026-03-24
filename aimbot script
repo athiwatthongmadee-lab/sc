@@ -1,0 +1,110 @@
+--// Rayfield UI
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "Aimbot GUI",
+    LoadingTitle = "Loading...",
+    ConfigurationSaving = {
+        Enabled = false
+    }
+})
+
+local Tab = Window:CreateTab("Aimbot", 4483362458)
+
+--// Settings
+local AimbotEnabled = false
+local AimPart = "Head"
+local Smoothness = 0.2
+local FOV = 100
+
+--// Services
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+local UserInputService = game:GetService("UserInputService")
+
+--// Get Closest Player (อัปเดต)
+function GetClosestPlayer()
+    local Closest = nil
+    local ShortestDistance = FOV
+
+    for _, v in pairs(Players:GetPlayers()) do
+        if v ~= LocalPlayer
+        and v.Character
+        and v.Character:FindFirstChild(AimPart)
+        and v.Character:FindFirstChild("Humanoid")
+        and v.Character:FindFirstChild("HumanoidRootPart")
+        and v.Character.Humanoid.Health > 0 then -- ✅ ไม่ล็อกคนตาย
+
+            local pos, onScreen = Camera:WorldToViewportPoint(v.Character[AimPart].Position)
+
+            if onScreen then
+                local dist = (Vector2.new(pos.X, pos.Y) - UserInputService:GetMouseLocation()).Magnitude
+
+                if dist < ShortestDistance then
+                    ShortestDistance = dist
+                    Closest = v
+                end
+            end
+        end
+    end
+
+    return Closest
+end
+
+--// Aimbot Loop
+game:GetService("RunService").RenderStepped:Connect(function()
+    if AimbotEnabled then
+        local target = GetClosestPlayer()
+
+        if target 
+        and target.Character 
+        and target.Character:FindFirstChild(AimPart)
+        and target.Character:FindFirstChild("Humanoid")
+        and target.Character.Humanoid.Health > 0 then
+
+            local targetPos = target.Character[AimPart].Position
+            local newCFrame = CFrame.new(Camera.CFrame.Position, targetPos)
+
+            Camera.CFrame = Camera.CFrame:Lerp(newCFrame, Smoothness)
+        end
+    end
+end)
+
+--// UI
+Tab:CreateToggle({
+    Name = "Enable Aimbot",
+    CurrentValue = false,
+    Callback = function(Value)
+        AimbotEnabled = Value
+    end,
+})
+
+Tab:CreateDropdown({
+    Name = "Aim Part",
+    Options = {"Head", "HumanoidRootPart", "Torso"},
+    CurrentOption = "Head",
+    Callback = function(Value)
+        AimPart = Value
+    end,
+})
+
+Tab:CreateSlider({
+    Name = "Smoothness",
+    Range = {0.05, 1},
+    Increment = 0.05,
+    CurrentValue = 0.2,
+    Callback = function(Value)
+        Smoothness = Value
+    end,
+})
+
+Tab:CreateSlider({
+    Name = "FOV",
+    Range = {50, 300},
+    Increment = 10,
+    CurrentValue = 100,
+    Callback = function(Value)
+        FOV = Value
+    end,
+})
