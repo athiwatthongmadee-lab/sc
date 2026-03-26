@@ -1,1 +1,148 @@
-loadstring(game:HttpGet("https://pastebin.com/raw/Pyjiz4ME",true))()
+-- Universal Hub (Fly + Speed + Jump + Aimbot + ESP)
+
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- GUI
+local gui = Instance.new("ScreenGui", player.PlayerGui)
+gui.Name = "UniversalHub"
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 300)
+frame.Position = UDim2.new(0.05, 0, 0.25, 0)
+frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Active = true
+frame.Draggable = true
+
+local function makeBtn(text, y)
+    local b = Instance.new("TextButton", frame)
+    b.Size = UDim2.new(0,200,0,35)
+    b.Position = UDim2.new(0,10,0,y)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    return b
+end
+
+local flyBtn = makeBtn("Fly", 10)
+local speedBtn = makeBtn("Speed", 50)
+local jumpBtn = makeBtn("Infinite Jump", 90)
+local aimBtn = makeBtn("Aimbot", 130)
+local espBtn = makeBtn("ESP", 170)
+
+-- States
+local flying = false
+local speedOn = false
+local aimbot = false
+local esp = false
+
+-- FLY
+flyBtn.MouseButton1Click:Connect(function()
+    flying = not flying
+    local hrp = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        if flying then
+            local bv = Instance.new("BodyVelocity", hrp)
+            bv.Name = "FlyForce"
+            bv.Velocity = Vector3.new(0,50,0)
+            bv.MaxForce = Vector3.new(0,math.huge,0)
+        else
+            if hrp:FindFirstChild("FlyForce") then
+                hrp.FlyForce:Destroy()
+            end
+        end
+    end
+end)
+
+-- SPEED
+speedBtn.MouseButton1Click:Connect(function()
+    local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+    if hum then
+        speedOn = not speedOn
+        hum.WalkSpeed = speedOn and 32 or 16
+    end
+end)
+
+-- INFINITE JUMP
+jumpBtn.MouseButton1Click:Connect(function()
+    UIS.JumpRequest:Connect(function()
+        local hum = player.Character and player.Character:FindFirstChildOfClass("Humanoid")
+        if hum then
+            hum:ChangeState("Jumping")
+        end
+    end)
+end)
+
+-- AIMBOT
+local function getClosest()
+    local closest = nil
+    local dist = math.huge
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("Head") then
+            local pos, visible = workspace.CurrentCamera:WorldToViewportPoint(v.Character.Head.Position)
+            if visible then
+                local diff = (Vector2.new(pos.X,pos.Y) - UIS:GetMouseLocation()).Magnitude
+                if diff < dist then
+                    dist = diff
+                    closest = v
+                end
+            end
+        end
+    end
+    return closest
+end
+
+aimBtn.MouseButton1Click:Connect(function()
+    aimbot = not aimbot
+end)
+
+RunService.RenderStepped:Connect(function()
+    if aimbot then
+        local target = getClosest()
+        if target and target.Character then
+            workspace.CurrentCamera.CFrame = CFrame.new(
+                workspace.CurrentCamera.CFrame.Position,
+                target.Character.Head.Position
+            )
+        end
+    end
+end)
+
+-- ESP
+local espBoxes = {}
+
+local function createESP(plr)
+    if plr == player then return end
+    local box = Drawing.new("Square")
+    box.Color = Color3.new(1,0,0)
+    box.Thickness = 2
+    box.Filled = false
+    espBoxes[plr] = box
+end
+
+for _,p in pairs(game.Players:GetPlayers()) do
+    createESP(p)
+end
+
+game.Players.PlayerAdded:Connect(createESP)
+
+espBtn.MouseButton1Click:Connect(function()
+    esp = not esp
+end)
+
+RunService.RenderStepped:Connect(function()
+    for plr,box in pairs(espBoxes) do
+        if esp and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local pos, vis = workspace.CurrentCamera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+            if vis then
+                box.Size = Vector2.new(50,80)
+                box.Position = Vector2.new(pos.X-25,pos.Y-40)
+                box.Visible = true
+            else
+                box.Visible = false
+            end
+        else
+            box.Visible = false
+        end
+    end
+end)
