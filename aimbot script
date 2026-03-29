@@ -1,23 +1,75 @@
+--// Services
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+
 local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
-local AimPart = "Head" -- เปลี่ยนเป็น "HumanoidRootPart" ได้
+--// Settings
+local Aimbot = false
+local AimPart = "Head"
+local Smoothness = 0.15 -- ปรับได้ (0 = ล็อกไว, 1 = ช้า)
 
-function GetClosestPlayer()
-    local closest = nil
-    local shortestDistance = math.huge
+--// GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 200, 0, 180)
+Frame.Position = UDim2.new(0, 20, 0, 200)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 
-    for _, player in pairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild(AimPart) then
-            local part = player.Character[AimPart]
-            local screenPos, onScreen = Camera:WorldToViewportPoint(part.Position)
+-- ปุ่มเปิด/ปิด
+local Toggle = Instance.new("TextButton", Frame)
+Toggle.Size = UDim2.new(1, 0, 0, 40)
+Toggle.Text = "Aimbot: OFF"
+Toggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
 
-            if onScreen then
-                local distance = (Vector2.new(Mouse.X, Mouse.Y) - Vector2.new(screenPos.X, screenPos.Y)).Magnitude
-                if distance < shortestDistance then
-                    shortestDistance = distance
+Toggle.MouseButton1Click:Connect(function()
+    Aimbot = not Aimbot
+    Toggle.Text = "Aimbot: "..(Aimbot and "ON" or "OFF")
+end)
+
+-- เลือก Part
+local Parts = {"Head","HumanoidRootPart","LeftFoot"}
+for i,v in pairs(Parts) do
+    local Btn = Instance.new("TextButton", Frame)
+    Btn.Size = UDim2.new(1, 0, 0, 30)
+    Btn.Position = UDim2.new(0, 0, 0, 40 + (i-1)*30)
+    Btn.Text = "Aim: "..v
+    Btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+
+    Btn.MouseButton1Click:Connect(function()
+        AimPart = v
+    end)
+end
+
+-- Smooth ปรับ
+local SmoothBtn = Instance.new("TextButton", Frame)
+SmoothBtn.Size = UDim2.new(1, 0, 0, 30)
+SmoothBtn.Position = UDim2.new(0, 0, 0, 130)
+SmoothBtn.Text = "Smooth: "..Smoothness
+
+SmoothBtn.MouseButton1Click:Connect(function()
+    Smoothness = Smoothness + 0.05
+    if Smoothness > 0.5 then Smoothness = 0.05 end
+    SmoothBtn.Text = "Smooth: "..math.round(Smoothness*100)/100
+end)
+
+--// หาเป้า
+function GetClosest()
+    local closest, dist = nil, math.huge
+
+    for _,plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild(AimPart) then
+            local part = plr.Character[AimPart]
+            local pos, visible = Camera:WorldToViewportPoint(part.Position)
+
+            if visible then
+                local mouse = UIS:GetMouseLocation()
+                local mag = (Vector2.new(pos.X,pos.Y) - mouse).Magnitude
+
+                if mag < dist then
+                    dist = mag
                     closest = part
                 end
             end
@@ -27,9 +79,14 @@ function GetClosestPlayer()
     return closest
 end
 
-game:GetService("RunService").RenderStepped:Connect(function()
-    local target = GetClosestPlayer()
-    if target then
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.Position)
+--// Aimbot Loop
+RunService.RenderStepped:Connect(function()
+    if Aimbot then
+        local target = GetClosest()
+        if target then
+            local current = Camera.CFrame
+            local new = CFrame.new(current.Position, target.Position)
+            Camera.CFrame = current:Lerp(new, Smoothness)
+        end
     end
 end)
