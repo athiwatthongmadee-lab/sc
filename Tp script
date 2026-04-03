@@ -1,0 +1,91 @@
+--// TP GUI + Player List + Search
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+--// GUI
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "TP_GUI"
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 300, 0, 350)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -175)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.Active = true
+Frame.Draggable = true
+
+-- Title
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1, 0, 0, 30)
+Title.Text = "TP PLAYER"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundColor3 = Color3.fromRGB(20,20,20)
+
+-- Search Box
+local SearchBox = Instance.new("TextBox", Frame)
+SearchBox.Size = UDim2.new(1, -10, 0, 35)
+SearchBox.Position = UDim2.new(0, 5, 0, 35)
+SearchBox.PlaceholderText = "🔍 ค้นหาชื่อ..."
+SearchBox.Text = ""
+SearchBox.TextColor3 = Color3.new(1,1,1)
+SearchBox.BackgroundColor3 = Color3.fromRGB(50,50,50)
+
+-- Scroll list
+local Scroll = Instance.new("ScrollingFrame", Frame)
+Scroll.Size = UDim2.new(1, -10, 1, -80)
+Scroll.Position = UDim2.new(0, 5, 0, 75)
+Scroll.CanvasSize = UDim2.new(0,0,0,0)
+Scroll.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+local UIListLayout = Instance.new("UIListLayout", Scroll)
+
+--// TP
+local function teleportTo(plr)
+    if plr and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+        LocalPlayer.Character:MoveTo(plr.Character.HumanoidRootPart.Position + Vector3.new(0,3,0))
+    end
+end
+
+--// Create Button
+local function createPlayerButton(plr)
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -5, 0, 40)
+    Btn.Text = plr.Name
+    Btn.TextColor3 = Color3.new(1,1,1)
+    Btn.BackgroundColor3 = Color3.fromRGB(0,120,200)
+    Btn.Parent = Scroll
+
+    Btn.MouseButton1Click:Connect(function()
+        teleportTo(plr)
+    end)
+end
+
+--// Refresh
+local function refresh()
+    local keyword = SearchBox.Text:lower()
+
+    for _, v in pairs(Scroll:GetChildren()) do
+        if v:IsA("TextButton") then
+            v:Destroy()
+        end
+    end
+
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            if keyword == "" or plr.Name:lower():find(keyword) then
+                createPlayerButton(plr)
+            end
+        end
+    end
+
+    task.wait()
+    Scroll.CanvasSize = UDim2.new(0,0,0,UIListLayout.AbsoluteContentSize.Y)
+end
+
+-- Update realtime ตอนพิมพ์
+SearchBox:GetPropertyChangedSignal("Text"):Connect(refresh)
+
+Players.PlayerAdded:Connect(refresh)
+Players.PlayerRemoving:Connect(refresh)
+
+refresh()
